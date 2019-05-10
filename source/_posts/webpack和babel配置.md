@@ -1,7 +1,7 @@
 ---
 title: webpack和babel配置
 date: 2019-05-10 14:20:02
-tags:webpack
+tags: webpack
 ---
 
 ## webpack.common.js
