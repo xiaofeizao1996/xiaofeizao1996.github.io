@@ -60,7 +60,7 @@ module.exports = {
 
 - options  
   |name|type|default|description|
-  |--|--|--|--|
+  |-|-|-|-|
   |test|String RegExp Array(String RegExp)|/\.m?js(\?.\*)?\$/i|匹配符合规则的文件|
   |include|String RegExp Array(String RegExp)|undefined|要包含的文件|
   |exclude|String RegExp Array(String RegExp)|undefined|不包含的文件|
