@@ -9,19 +9,31 @@ tags: webpack
 ```javascript
 const path = require("path");
 const webpack = require("webpack");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CleanWebpackPlugin = require("clean-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const ProgressBarPlugin = require("progress-bar-webpack-plugin");
+
+const devMode = process.env.NODE_ENV === "development";
 
 module.exports = {
-  entry: ["@babel/polyfill", "./src/index.js"],
+  entry: {
+    app: "./src/index.js"
+  },
   output: {
-    filename: "[name].bundle.js",
-    path: path.resolve(__dirname, "./dist")
+    filename: "[name].[hash].js",
+    path: path.resolve(__dirname, "../dist"),
+    publicPath: "/"
   },
   resolve: {
     alias: {
-      components: path.resolve(__dirname, "../src/components/")
+      root: path.resolve(__dirname, "./"),
+      components: path.resolve(__dirname, "../src/components/"),
+      assets: path.resolve(__dirname, "../src/assets/"),
+      services: path.resolve(__dirname, "../src/services/"),
+      utils: path.resolve(__dirname, "../src/utils/"),
+      models: path.resolve(__dirname, "../src/models/"),
+      "@ant-design/icons/lib/dist$": path.resolve(__dirname, "../src/icons.js")
     }
   },
   module: {
@@ -40,9 +52,7 @@ module.exports = {
         test: /\.(less|css)$/,
         exclude: [path.resolve(__dirname, "../node_modules")],
         use: [
-          {
-            loader: MiniCssExtractPlugin.loader
-          },
+          devMode ? "style-loader" : MiniCssExtractPlugin.loader,
           {
             loader: "css-loader",
             options: {
@@ -50,6 +60,7 @@ module.exports = {
               localIdentName: "[hash:base64:6]"
             }
           },
+          { loader: "postcss-loader" },
           {
             loader: "less-loader",
             options: {
@@ -62,9 +73,7 @@ module.exports = {
         test: /\.(css|less)$/,
         include: [path.resolve(__dirname, "../node_modules")],
         use: [
-          {
-            loader: MiniCssExtractPlugin.loader
-          },
+          devMode ? "style-loader" : MiniCssExtractPlugin.loader,
           {
             loader: "css-loader"
           },
@@ -77,7 +86,8 @@ module.exports = {
         ]
       },
       {
-        test: /\.(png|jpg|gif|svg)$/,
+        test: /\.(jpg|jpeg|bmp|svg|png|webp|gif)$/,
+        include: [path.resolve(__dirname, "../src")],
         use: [
           {
             loader: "url-loader",
@@ -99,9 +109,9 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      "process.env.NOVA_ROOT": `process.env.NOVA_ROOT`,
-      IS_PROXY: process.env.IS_PROXY,
-      DEV_MODE: process.env.DEV_MODE
+      "process.env.NOVA_ROOT": JSON.stringify(process.env.NOVA_ROOT),
+      IS_PROXY: JSON.stringify(process.env.IS_PROXY),
+      DEV_MODE: JSON.stringify(process.env.DEV_MODE)
     }),
     new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
@@ -110,8 +120,36 @@ module.exports = {
     }),
     new MiniCssExtractPlugin({
       filename: `[name].css`
-    })
-  ]
+    }),
+    new ProgressBarPlugin(),
+    new webpack.optimize.ModuleConcatenationPlugin()
+  ],
+  optimization: {
+    runtimeChunk: true,
+    usedExports: true,
+    splitChunks: {
+      chunks: "async",
+      minSize: 30000,
+      maxSize: 0,
+      minChunks: 1,
+      maxAsyncRequests: 5,
+      maxInitialRequests: 3,
+      automaticNameDelimiter: "~",
+      name: true,
+      cacheGroups: {
+        vendors: {
+          name: "vendor",
+          chunks: "async",
+          minChunks: 5
+        },
+        default: {
+          minChunks: 2,
+          priority: -20,
+          reuseExistingChunk: true
+        }
+      }
+    }
+  }
 };
 ```
 
@@ -123,20 +161,41 @@ module.exports = {
 
 ```javascript
 const merge = require("webpack-merge");
+const BundlePlugin = require("webpack-bundle-analyzer");
 const common = require("./webpack.common.js");
+
+const { BundleAnalyzerPlugin } = BundlePlugin;
 
 module.exports = merge(common, {
   mode: "development",
   devtool: "eval-source-map",
   devServer: {
-    contentBase: "./dist",
+    contentBase: "../dist",
     proxy: {
       "/api": {
-        target: `process.env.NOVA_ROOT`,
+        target: process.env.NOVA_ROOT,
         changeOrigin: true
       }
     }
-  }
+  },
+  optimization: {
+    runtimeChunk: {
+      name: entrypoint => `runtime~${entrypoint.name}`
+    }
+  },
+  pluginsL: [
+    new BundleAnalyzerPlugin({
+      analyzerMode: "server",
+      analyzerHost: "127.0.0.1",
+      analyzerPort: 8888,
+      reportFilename: "report.html",
+      defaultSizes: "parsed",
+      openAnalyzer: true,
+      generateStatsFile: false,
+      statsFilename: "stats.json",
+      logLevel: "info"
+    })
+  ]
 });
 ```
 
@@ -144,10 +203,30 @@ module.exports = merge(common, {
 
 ```javascript
 const merge = require("webpack-merge");
+const TerserPlugin = require("terser-webpack-plugin");
+const CompressionPlugin = require("compression-webpack-plugin");
 const common = require("./webpack.common.js");
 
 module.exports = merge(common, {
-  mode: "production"
+  mode: "production",
+  devtool: "false",
+  plugins: [
+    new CompressionPlugin({
+      cache: true,
+      test: /\.js(\?.*)?$/i
+    })
+  ],
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        parallel: 4
+      })
+    ],
+    flagIncludedChunks: true,
+    occurrenceOrder: true,
+    mergeDuplicateChunks: true
+  }
 });
 ```
 
@@ -155,27 +234,38 @@ module.exports = merge(common, {
 
 ```javascript
 {
-    "presets": [
-        [
-            "@babel/preset-env",
-            "useBuiltIns": "usage"
-        ],
-        "@babel/preset-react"
-    ]
-    plugins: [
-        ["@babel/plugin-proposal-decorators", { "legacy": true }],
-        ["@babel/plugin-proposal-class-properties", { "loose" : true }],
-        ["import", { libraryName: "antd", style: true }]
-        [
-			'babel-plugin-module-resolver',
+	"presets": [
+		[
+			"@babel/preset-env",
 			{
-				alias: {
-					components: './src/components',
-					assets: './src/assets/',
-				},
-			},
+				"useBuiltIns": "usage",
+				"corejs": 2
+			}
 		],
+		["@babel/preset-react"]
 	],
+	"plugins": [
+		[
+			"import",
+			{
+				"libraryName": "antd",
+				"style": true
+			}
+		],
+		["@babel/plugin-proposal-decorators", { "legacy": true }],
+		["@babel/plugin-proposal-class-properties", { "loose": true }],
+		["@babel/plugin-syntax-dynamic-import"],
+		[
+			"@babel/plugin-transform-runtime",
+			{
+				"absoluteRuntime": false,
+				"corejs": false,
+				"helpers": true,
+				"regenerator": true,
+				"useESModules": false
+			}
+		]
+	]
 }
 ```
 
