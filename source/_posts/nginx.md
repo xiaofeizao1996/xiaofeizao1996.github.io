@@ -73,3 +73,5 @@ tags: nginx
   - 执行 make 编译 `make` 如果没有任何错误就代表着编译完成。如下图所示:
     ![make](./nginx/1558203981011.jpg)
   - 最后进行 make install `make install`
+
+- 建立软连接 全局可以使用 nginx `ln -s /home/nginx/sbin/nginx /usr/local/bin/nginx`
