@@ -1,33 +1,30 @@
-# 使用语言
 language: node_js
-# node版本
 node_js: stable
-# 设置只监听哪个分支
 branches:
   only:
-    - source
-# 缓存，可以节省集成的时间，这里我用了yarn，如果不用可以删除
+  - source
 cache:
   apt: true
   yarn: true
   directories:
-    - node_modules
-# tarvis生命周期执行顺序详见官网文档
+  - node_modules
 before_install:
-  - git config --global user.name "xiaofeizao1996"
-  - git config --global user.email "xiaofeizao1996@gmail.com"
-  - curl -o- -L https://yarnpkg.com/install.sh | bash
-  - export PATH=$HOME/.yarn/bin:$PATH
-  - npm install -g hexo-cli
+- openssl aes-256-cbc -K $encrypted_1db4be9f9453_key -iv $encrypted_1db4be9f9453_iv
+  -in deploy_rsa.enc -out deploy_rsa -d
+- git config --global user.name "xiaofeizao1996"
+- git config --global user.email "xiaofeizao1996@gmail.com"
+- curl -o- -L https://yarnpkg.com/install.sh | bash
+- export PATH=$HOME/.yarn/bin:$PATH
+- npm install -g hexo-cli
 install:
-  - yarn
+- yarn
 script:
-  - hexo clean
-  - hexo generate
+- hexo clean
+- hexo generate
 after_success:
-  - cd ./public
-  - git init
-  - git add --all .
-  - git commit -m "Travis CI Auto Builder"
-  - git push --quiet --force https://$REPO_TOKEN@github.com/xiaofeizao1996/xiaofeizao1996.github.io.git
-    master
+- cd ./public
+- git init
+- git add --all .
+- git commit -m "Travis CI Auto Builder"
+- git push --quiet --force https://$REPO_TOKEN@github.com/xiaofeizao1996/xiaofeizao1996.github.io.git
+  master
