@@ -59,6 +59,7 @@ module.exports = {
 ```
 
 - options  
+---
   |name|type|default|description|
   |-|-|-|-|
   |test|String RegExp Array(String RegExp)|/\.m?js(\?.\*)?\$/i|匹配符合规则的文件|
@@ -71,7 +72,7 @@ module.exports = {
   |sourceMap|Boolean|false|使用 sourceMap 映射报错信息到指定模块,如果你使用你自己自定义的 minify 函数,请仔细阅读 minify 部分从而正确的处理 sourceMap。⚠️cheap-source-map 这个选项在这个插件中不会运行。|
   |minify|Function|undefined|允许你覆盖默认的 minify 函数,默认情况下,插件使用 terser 包中的 minify 函数。适用于使用和测试未发布的版本或分支。|
   |terserOptions|Object|default|Terser minify 选项:https://github.com/terser-js/terser#minify-options |
-
+---
 * mini-css-extract-plugin ：`https://webpack.docschina.org/plugins/mini-css-extract-plugin/`
 
 - webpack 官方提供的一个将 CSS 提取到单独的文件中的插件。它为每个包含 CSS 的 JS 文件创建一个 CSS 文件。它支持 CSS 和 SourceMaps 的按需加载。
