@@ -1,0 +1,17 @@
+{
+  "short_name": "Tools Player",
+  "name": "Tools Player - 开发者工具集合",
+  "description": "一个简洁实用的开发者工具集合网站",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary"
+}
